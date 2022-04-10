@@ -5,8 +5,9 @@ use std::thread::{self, JoinHandle};
 use std::time;
 
 // Basically the test parameters are here:
-const THREAD_COUNT: i32 = 1500;
-const SLEEP_INTERVAL: time::Duration = time::Duration::from_secs(1);
+const THREAD_COUNT: i32 = 5000;
+//const SLEEP_INTERVAL: time::Duration = time::Duration::from_secs(1);
+const SLEEP_INTERVAL: time::Duration = time::Duration::from_millis(500);
 
 fn yielder_thread(id: &i32, condition: Arc<AtomicBool>) {
   println!("Yielder thread {} started.", id);
