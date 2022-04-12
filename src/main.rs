@@ -26,7 +26,7 @@ fn yielder_thread_no_atomic(id: &u32) {
 }
 
 fn sleeper_thread(id: &u32, condition: Arc<AtomicBool>, sleep_interval: time::Duration) {
-  println!("Sleeper thread {} started.", id);
+  println!("Sleeper thread {} started - Sleep interval {}.", id, sleep_interval.as_millis());
   while condition.load(Ordering::SeqCst) == false {
     thread::sleep(sleep_interval);
   }
@@ -39,7 +39,7 @@ fn main() {
   let mut handles: Vec<JoinHandle<()>> = Vec::new();
 
   let matches = Command::new("many-threads-experiment")
-    .version("0.1.0")
+    .version("0.1.1")
     .author("DkVZ <dk@dkvz.eu>")
     .about("Experiment with many idle threads of different types")
     .arg(Arg::new("mode").index(1).default_value(DEFAULT_MODE).help(
