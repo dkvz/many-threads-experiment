@@ -1,45 +1,16 @@
 use clap::{Arg, Command};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::AtomicBool;
+use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time;
+mod thread_types;
+use thread_types::{parked_thread, sleeper_thread, yielder_thread, yielder_thread_no_atomic};
 
 // These are strings because they're command line arguments.
 const DEFAULT_MODE: &str = "3";
 const DEFAULT_THREAD_COUNT: &str = "1500";
 const DEFAULT_SLEEP_INTERVAL: &str = "500";
-
-fn yielder_thread(id: &u32, condition: Arc<AtomicBool>) {
-  println!("Yielder thread {} started.", id);
-  while condition.load(Ordering::SeqCst) == false {
-    thread::yield_now();
-  }
-}
-
-// This uses the same amount of CPU as with the
-// atomic check.
-fn yielder_thread_no_atomic(id: &u32) {
-  println!("Yielder (no atomic check) thread {} started.", id);
-  loop {
-    thread::yield_now();
-  }
-}
-
-fn sleeper_thread(id: &u32, condition: Arc<AtomicBool>, sleep_interval: time::Duration) {
-  println!(
-    "Sleeper thread {} started - Sleep interval {}.",
-    id,
-    sleep_interval.as_millis()
-  );
-  while condition.load(Ordering::SeqCst) == false {
-    thread::sleep(sleep_interval);
-  }
-}
-
-fn parked_thread(id: &u32) {
-  println!("Parked thread {} started.", id);
-  thread::park();
-}
 
 fn main() {
   let dumb_condition = Arc::new(AtomicBool::new(false));
