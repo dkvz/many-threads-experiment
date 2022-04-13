@@ -1,15 +1,19 @@
 use clap::{Arg, Command};
 use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
+use std::sync::{Arc, Condvar, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time;
 mod thread_types;
-use thread_types::{parked_thread, sleeper_thread, yielder_thread, yielder_thread_no_atomic};
+use thread_types::{
+  condvar_thread, parked_thread, sleeper_thread, yielder_thread, yielder_thread_no_atomic,
+};
 
 // These are strings because they're command line arguments.
 const DEFAULT_MODE: &str = "3";
 const DEFAULT_THREAD_COUNT: &str = "1500";
 const DEFAULT_SLEEP_INTERVAL: &str = "500";
+
+type MutexCondvar = (Mutex<bool>, Condvar);
 
 fn main() {
   let dumb_condition = Arc::new(AtomicBool::new(false));
@@ -26,7 +30,8 @@ fn main() {
           1 - Threads that yield immediately\n \
           2 - Same but with no check whatsoever\n \
           3 - Threads that go to sleep immediately\n \
-          4 - Thread that park immediately",
+          4 - Thread that park immediately\n \
+          5 - Waiting threads (Condvar)",
     ))
     .arg(
       Arg::new("thread_count")
@@ -57,6 +62,7 @@ fn main() {
     .parse()
     .unwrap_or(DEFAULT_SLEEP_INTERVAL.parse().unwrap());
   let sleep_interval = time::Duration::from_millis(sleep_interval);
+  let condvar = Arc::new((Mutex::new(false), Condvar::new()));
 
   for i in 1..(thread_count + 1) {
     let condition_clone = dumb_condition.clone();
@@ -67,6 +73,10 @@ fn main() {
         sleeper_thread(&i, condition_clone, sleep_interval)
       })),
       "4" => handles.push(thread::spawn(move || parked_thread(&i))),
+      "5" => {
+        let condvar_clone = condvar.clone();
+        handles.push(thread::spawn(move || condvar_thread(&i, condvar_clone)))
+      }
       _ => println!("Please provide mode as argument, 1 to uh... 4?"),
     }
   }
