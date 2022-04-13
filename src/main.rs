@@ -26,10 +26,19 @@ fn yielder_thread_no_atomic(id: &u32) {
 }
 
 fn sleeper_thread(id: &u32, condition: Arc<AtomicBool>, sleep_interval: time::Duration) {
-  println!("Sleeper thread {} started - Sleep interval {}.", id, sleep_interval.as_millis());
+  println!(
+    "Sleeper thread {} started - Sleep interval {}.",
+    id,
+    sleep_interval.as_millis()
+  );
   while condition.load(Ordering::SeqCst) == false {
     thread::sleep(sleep_interval);
   }
+}
+
+fn parked_thread(id: &u32) {
+  println!("Parked thread {} started.", id);
+  thread::park();
 }
 
 fn main() {
@@ -46,7 +55,8 @@ fn main() {
       "Which test to run\n \
           1 - Threads that yield immediately\n \
           2 - Same but with no check whatsoever\n \
-          3 - Threads that go to sleep immediately\n",
+          3 - Threads that go to sleep immediately\n \
+          4 - Thread that park immediately",
     ))
     .arg(
       Arg::new("thread_count")
@@ -86,7 +96,8 @@ fn main() {
       "3" => handles.push(thread::spawn(move || {
         sleeper_thread(&i, condition_clone, sleep_interval)
       })),
-      _ => println!("Please provide mode as argument, 1 to something"),
+      "4" => handles.push(thread::spawn(move || parked_thread(&i))),
+      _ => println!("Please provide mode as argument, 1 to uh... 4?"),
     }
   }
 
