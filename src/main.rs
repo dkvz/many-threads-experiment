@@ -31,7 +31,8 @@ fn main() {
           2 - Same but with no check whatsoever\n \
           3 - Threads that go to sleep immediately\n \
           4 - Thread that park immediately\n \
-          5 - Waiting threads (Condvar)",
+          5 - Waiting threads (Condvar)\n
+          6 - Spawns a single waiting process, options are ignored",
     ))
     .arg(
       Arg::new("thread_count")
@@ -76,7 +77,13 @@ fn main() {
       "5" => {
         let condvar_clone = condvar.clone();
         handles.push(thread::spawn(move || condvar_thread(&i, condvar_clone)))
-      }
+      },
+      "6" => {
+        // Yes I know I'm in a loop. This is a test program OK?
+        println!("Started single waiting process...");
+        thread::park();
+        break;
+      },
       _ => println!("Please provide mode as argument, 1 to uh... 4?"),
     }
   }
